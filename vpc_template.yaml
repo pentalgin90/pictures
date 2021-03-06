@@ -1,0 +1,155 @@
+Parameters:
+  VPCName:
+    Description: Name new VPC
+    Type: 'String'
+  VpcCIDRBlock:
+    Description: CiderBlock VPC
+    Type: 'String'
+    Default: 10.0.0.0/16
+  PublicCIDRBlock:
+    Description: CiderBlock public subnet
+    Type: 'String'
+    Default: 10.0.11.0/24
+  PrivateCIDRBlock:
+    Description: CiderBlock private subnet
+    Type: 'String'
+    Default: 10.0.22.0/24
+Resources:
+#  VPC описание сети
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDRBlock
+      Tags:
+        - Key: Name
+          Value: !Ref VPCName
+#  Добавление SecurityGroup
+  SG:
+    DependsOn: VPC
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${VPCName} Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: icmp
+          FromPort: 8
+          ToPort: -1
+          CidrIp: !Ref VpcCIDRBlock
+#  Интернет шлюз
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Ref VPCName
+#  Привязка интернет шлюза к VPC
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+#  Отписание публичной подсети
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref PublicCIDRBlock
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${VPCName} Public Subnet (AZ1)
+#  Описание приватной подсети
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref PrivateCIDRBlock
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${VPCName} Private Subnet (AZ1)
+#  NAT шлюз
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+          Fn::GetAtt:
+          - EIP
+          - AllocationId
+      SubnetId: !Ref PublicSubnet
+  EIP:
+    DependsOn: InternetGatewayAttachment
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+#  Маршрутизация для публичной сети
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${VPCName} Public Routes
+#  Добавление внешнего маршрута для публичной сети
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+#  Attaching public routeTable
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
+#  Маршрутизация для приватной сети
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${VPCName} Private Route
+#  Добавление внешнего маршрута для приватной сети
+  DefaultPrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+#  Attaching private routeTable
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+Outputs:
+  VPC:
+    Description: A reference to created VPC
+    Value: !Ref VPC
+  SG:
+    Description: A reference to created Security Group
+    Value: !Ref SG
+  PublicSubnet:
+    Description: A reference to create Public Subnet
+    Value: !Ref PublicSubnet
+  PrivateSubnet:
+    Description: A reference to create Private Subnet
+    Value: !Ref PrivateSubnet
+  ElastickIp:
+    Description: A reference to create Elastick IP
+    Value: !Ref EIP
+  PrivateRouteTable:
+    Description: A reference to create private route table
+    Value: !Ref PrivateRouteTable
+  PublicRouteTable:
+    Description: A reference to create public route table
+    Value: !Ref PublicRouteTable

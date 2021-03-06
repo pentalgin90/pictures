@@ -1,0 +1,38 @@
+Parameters:
+  PublicSubnet:
+    Description: Subnet
+    Type: "AWS::EC2::Subnet::Id"
+  PrivateSubnet:
+    Description: Subnet
+    Type: "AWS::EC2::Subnet::Id"
+  KeyPair:
+    Description: Amazon EC2 Key Pair
+    Type: "AWS::EC2::KeyPair::KeyName"
+  SecurityGroup:
+    Description: Security Group
+    Type: "List<AWS::EC2::SecurityGroup::Id>"
+Resources:
+#  Public instance
+  PublicEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0915bcb5fa77e4892
+      SecurityGroupIds: !Ref SecurityGroup
+      KeyName: !Ref KeyPair
+      SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: Name
+          Value: public
+#  Private instance
+  PrivateEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-0915bcb5fa77e4892
+      SecurityGroupIds: !Ref SecurityGroup
+      KeyName: !Ref KeyPair
+      SubnetId: !Ref PrivateSubnet
+      Tags:
+        - Key: Name
+          Value: private
