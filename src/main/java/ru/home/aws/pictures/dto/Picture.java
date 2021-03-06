@@ -10,7 +10,6 @@ public class Picture implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String name;
-    @Column(columnDefinition = "longText")
     private String path;
 
     public Picture(){}

@@ -2,6 +2,7 @@ package ru.home.aws.pictures.controllers;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,9 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.home.aws.pictures.dto.Picture;
 import ru.home.aws.pictures.service.PictureService;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 
 @RestController
 @RequestMapping("/pictures")
@@ -21,6 +20,7 @@ public class PicturesController {
     private final AmazonS3 amazonS3;
     private final Bucket bucket;
 
+    @Autowired
     public PicturesController(PictureService pictureService, AmazonS3 amazonS3, Bucket bucket){
         this.pictureService = pictureService;
         this.amazonS3 = amazonS3;
