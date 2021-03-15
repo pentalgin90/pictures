@@ -13,18 +13,20 @@ import ru.home.aws.pictures.service.PictureService;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/pictures")
+@RequestMapping("/images")
 public class PicturesController {
 
     private final PictureService pictureService;
     private final AmazonS3 amazonS3;
     private final Bucket bucket;
+    private final String topicArn;
 
     @Autowired
-    public PicturesController(PictureService pictureService, AmazonS3 amazonS3, Bucket bucket){
+    public PicturesController(PictureService pictureService, AmazonS3 amazonS3, Bucket bucket, String topicArn){
         this.pictureService = pictureService;
         this.amazonS3 = amazonS3;
         this.bucket = bucket;
+        this.topicArn = topicArn;
     }
 
     @GetMapping
