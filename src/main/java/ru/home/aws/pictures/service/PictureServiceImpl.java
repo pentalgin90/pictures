@@ -69,17 +69,17 @@ public class PictureServiceImpl implements PictureService{
         Picture pictureById = getPictureById(id);
         pictureRepo.delete(pictureById);
     }
-    @Scheduled(initialDelay = 10000, fixedDelay = 10000)
-    private void updateFromBucket(){
-        ObjectListing objectListing = amazonS3.listObjects(bucket.getName());
-        List<S3ObjectSummary> objectSummaries = objectListing.getObjectSummaries();
-        objectSummaries.stream().forEach(s3ObjectSummary -> {
-            if (getPictureByName(s3ObjectSummary.getKey()) == null) {
-                String url = String.format("https://s3.amazonaws.com/%s/%s", s3ObjectSummary.getBucketName(), s3ObjectSummary.getKey());
-                Picture picture = new Picture(s3ObjectSummary.getKey(), url);
-                create(picture);
-                System.out.println("New row was creat from bucket");
-            }
-        });
-    }
+//    @Scheduled(initialDelay = 10000, fixedDelay = 10000)
+//    private void updateFromBucket(){
+//        ObjectListing objectListing = amazonS3.listObjects(bucket.getName());
+//        List<S3ObjectSummary> objectSummaries = objectListing.getObjectSummaries();
+//        objectSummaries.stream().forEach(s3ObjectSummary -> {
+//            if (getPictureByName(s3ObjectSummary.getKey()) == null) {
+//                String url = String.format("https://s3.amazonaws.com/%s/%s", s3ObjectSummary.getBucketName(), s3ObjectSummary.getKey());
+//                Picture picture = new Picture(s3ObjectSummary.getKey(), url);
+//                create(picture);
+//                System.out.println("New row was creat from bucket");
+//            }
+//        });
+//    }
 }

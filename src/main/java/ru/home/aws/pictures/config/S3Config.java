@@ -24,7 +24,7 @@ public class S3Config {
     private String secret;
     @Value("${aws.bucket.name}")
     private String bucketName;
-    @Value("aws.sns.topic.name")
+    @Value("${aws.sns.topic.name}")
     private String topicName;
 
     @Bean

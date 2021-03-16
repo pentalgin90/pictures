@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import ru.home.aws.pictures.dto.Picture;
 import ru.home.aws.pictures.service.PictureService;
+import ru.home.aws.pictures.service.PushNotification;
 
 import java.io.IOException;
 
@@ -19,14 +20,14 @@ public class PicturesController {
     private final PictureService pictureService;
     private final AmazonS3 amazonS3;
     private final Bucket bucket;
-    private final String topicArn;
+    private final PushNotification pushNotification;
 
     @Autowired
-    public PicturesController(PictureService pictureService, AmazonS3 amazonS3, Bucket bucket, String topicArn){
+    public PicturesController(PictureService pictureService, AmazonS3 amazonS3, Bucket bucket, PushNotification pushNotification){
         this.pictureService = pictureService;
         this.amazonS3 = amazonS3;
         this.bucket = bucket;
-        this.topicArn = topicArn;
+        this.pushNotification = pushNotification;
     }
 
     @GetMapping
@@ -49,6 +50,7 @@ public class PicturesController {
         putObjectRequest.setAccessControlList(acl);
         amazonS3.putObject(putObjectRequest);
         String url = String.format("https://s3.amazonaws.com/%s/%s", bucket.getName(), file.getOriginalFilename());
+        push(file.getOriginalFilename(), url);
         Picture picture = new Picture(file.getOriginalFilename(), url);
         return new ResponseEntity<>(pictureService.create(picture), HttpStatus.CREATED);
     }
@@ -63,5 +65,9 @@ public class PicturesController {
         Picture pictureById = pictureService.getPictureById(id);
         amazonS3.deleteObject(bucket.getName(), pictureById.getName());
         pictureService.delete(id);
+    }
+
+    private void push(String fileName, String path){
+        pushNotification.push(fileName, path);
     }
 }
