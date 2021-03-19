@@ -1,4 +1,4 @@
-var url = "http://localhost:8080";
+var url = "http://54.235.62.106:8080";
 
 function uploadImage() {
   addImage();
