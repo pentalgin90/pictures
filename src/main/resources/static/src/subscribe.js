@@ -1,4 +1,4 @@
-var url = "http://54.235.62.106:8080";
+var url = "http://3.80.126.55:8080";
 
 function subscribe() {
 	let email = escape(document.getElementById('email').value);
