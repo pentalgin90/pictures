@@ -1,4 +1,4 @@
-var url = "http://3.80.126.55:8080";
+var url = "http://54.175.179.65:8080";
 
 function uploadImage() {
   addImage();

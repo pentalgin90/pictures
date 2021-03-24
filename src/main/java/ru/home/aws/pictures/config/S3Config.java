@@ -6,14 +6,21 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.sns.AmazonSNS;
 import com.amazonaws.services.sns.AmazonSNSClientBuilder;
 import com.amazonaws.services.sns.model.CreateTopicResult;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.Arrays;
 import java.util.Optional;
 
 @Component
@@ -22,8 +29,11 @@ public class S3Config {
     private String key;
     @Value("${aws.secretKey}")
     private String secret;
+    @Value("${aws.lambda.create-bucket}")
+    private String urlLambda;
     @Value("${aws.bucket.name}")
     private String bucketName;
+
     @Value("${aws.sns.topic.name}")
     private String topicName;
 
@@ -50,7 +60,7 @@ public class S3Config {
     @Bean
     public Bucket getBucket(){
         AmazonS3 s3client = getS3client();
-        if (s3client.doesBucketExistV2(bucketName)) {
+        if (createBucket()) {
             Optional<Bucket> first = s3client.listBuckets()
                                                     .stream()
                                                     .filter(bucket -> bucketName.equals(bucket.getName()))
@@ -60,7 +70,7 @@ public class S3Config {
             }
             return null;
         }
-        return s3client.createBucket(bucketName);
+        return null;
     }
 
     @Bean
@@ -68,6 +78,15 @@ public class S3Config {
         AmazonSNS sns = getSnsClient();
         CreateTopicResult topic = sns.createTopic(topicName);
         return topic.getTopicArn();
+    }
+
+    private boolean createBucket(){
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+        HttpEntity<String> entity = new HttpEntity<String>(headers);
+        String body = restTemplate.exchange(urlLambda, HttpMethod.GET, entity, String.class).getBody();
+        return body.equals("CREATED");
     }
 
 }
